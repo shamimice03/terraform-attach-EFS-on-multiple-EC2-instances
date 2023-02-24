@@ -25,6 +25,7 @@ module "vpc" {
 locals {
   public_subnets = module.vpc.public_subnet_id
   vpc_id         = module.vpc.vpc_id
+  file_system_id = aws_efs_file_system.file_system_1.id
 }
 
 ################## Create Security Group for Public Instances  ################## 
@@ -85,6 +86,26 @@ resource "aws_security_group" "efs_sg" {
   }
 }
 
+################## Create EFS File system ################ 
+resource "aws_efs_file_system" "file_system_1" {
+  creation_token   = "efs-test"
+  performance_mode = "generalPurpose"
+  throughput_mode  = "bursting"
+  lifecycle_policy {
+    transition_to_ia = "AFTER_30_DAYS"
+  }
+  tags = {
+    Name = "efs-test"
+  }
+}
+
+resource "aws_efs_mount_target" "mount_targets" {
+  count           = 2
+  file_system_id  = aws_efs_file_system.file_system_1.id
+  subnet_id       = local.public_subnets[count.index]
+  security_groups = [aws_security_group.efs_sg.id]
+}
+
 ################## SSH key generation ################## 
 resource "tls_private_key" "ssh" {
   algorithm = "RSA"
@@ -119,25 +140,17 @@ resource "aws_instance" "public_hosts" {
   }
 }
 
-resource "aws_efs_file_system" "file_system_1" {
-  creation_token   = "efs-test"
-  performance_mode = "generalPurpose"
-  throughput_mode  = "bursting"
-  lifecycle_policy {
-    transition_to_ia = "AFTER_30_DAYS"
-  }
-  tags = {
-    Name = "efs-test"
+resource "null_resource" "generate_efs_mount_script" {
+  
+    provisioner "local-exec" {
+    command = templatefile("efs_mount.tpl", {
+      efs_mount_point = var.efs_mount_point
+      file_system_id  = local.file_system_id
+    })
+    interpreter = [
+      "bash",
+      "-c"
+    ]
   }
 }
 
-resource "aws_efs_mount_target" "mount_targets" {
-  count           = 2
-  file_system_id  = aws_efs_file_system.file_system_1.id
-  subnet_id       = local.public_subnets[count.index]
-  security_groups = [aws_security_group.efs_sg.id]
-}
-
-locals {
-  file_system_id = aws_efs_file_system.file_system_1.id
-}
