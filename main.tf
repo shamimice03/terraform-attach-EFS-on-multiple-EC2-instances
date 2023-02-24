@@ -138,11 +138,35 @@ resource "aws_instance" "public_hosts" {
   tags = {
     "Name" = "public-instance-${count.index + 1}"
   }
+
+  depends_on = [
+    null_resource.generate_efs_mount_script
+  ]
+
+  provisioner "file" {
+    source      = "efs_mount.sh"
+    destination = "efs_mount.sh"
+  }
+
+  connection {
+    type        = "ssh"
+    host        = self.public_ip
+    user        = "ec2-user"
+    private_key = file(var.private_key_location) # Location of the Private Key
+    timeout     = "4m"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "bash efs_mount.sh",
+    ]
+  }
 }
 
+################## Generating Script for Mounting EFS ################## 
 resource "null_resource" "generate_efs_mount_script" {
-  
-    provisioner "local-exec" {
+
+  provisioner "local-exec" {
     command = templatefile("efs_mount.tpl", {
       efs_mount_point = var.efs_mount_point
       file_system_id  = local.file_system_id
@@ -151,6 +175,14 @@ resource "null_resource" "generate_efs_mount_script" {
       "bash",
       "-c"
     ]
+  }
+}
+
+################## Clean Up Existing Script ################## 
+resource "null_resource" "clean_up" {
+  provisioner "local-exec" {
+    when    = destroy
+    command = "rm -rf efs_mount.sh"
   }
 }
 
