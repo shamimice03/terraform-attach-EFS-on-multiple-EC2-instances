@@ -140,7 +140,8 @@ resource "aws_instance" "public_hosts" {
   }
 
   depends_on = [
-    null_resource.generate_efs_mount_script
+    null_resource.generate_efs_mount_script, 
+    aws_efs_mount_target.mount_targets
   ]
 
   provisioner "file" {
