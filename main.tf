@@ -64,7 +64,7 @@ resource "aws_security_group" "efs_sg" {
 
   dynamic "ingress" {
 
-    for_each = var.private_instance_sg_ports
+    for_each = var.efs_sg_ports
     content {
       from_port       = ingress.value["port"]
       to_port         = ingress.value["port"]
@@ -119,3 +119,25 @@ resource "aws_instance" "public_hosts" {
   }
 }
 
+resource "aws_efs_file_system" "file_system_1" {
+  creation_token   = "efs-test"
+  performance_mode = "generalPurpose"
+  throughput_mode  = "bursting"
+  lifecycle_policy {
+    transition_to_ia = "AFTER_30_DAYS"
+  }
+  tags = {
+    Name = "efs-test"
+  }
+}
+
+resource "aws_efs_mount_target" "mount_targets" {
+  count           = 2
+  file_system_id  = aws_efs_file_system.file_system_1.id
+  subnet_id       = local.public_subnets[count.index]
+  security_groups = [aws_security_group.efs_sg.id]
+}
+
+locals {
+  file_system_id = aws_efs_file_system.file_system_1.id
+}
