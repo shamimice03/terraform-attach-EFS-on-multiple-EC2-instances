@@ -121,8 +121,8 @@ resource "local_file" "private_key" {
 
 ################## Create AWS key pair ################## 
 resource "aws_key_pair" "aws_ec2_access_key" {
-  key_name   = var.key_name
-  public_key = tls_private_key.ssh.public_key_openssh
+  key_name_prefix = var.key_name
+  public_key      = tls_private_key.ssh.public_key_openssh
 }
 
 ################## Create AWS EC2 Instance on Public Subnet ################ 
@@ -140,7 +140,7 @@ resource "aws_instance" "public_hosts" {
   }
 
   depends_on = [
-    null_resource.generate_efs_mount_script, 
+    null_resource.generate_efs_mount_script,
     aws_efs_mount_target.mount_targets
   ]
 
@@ -181,6 +181,7 @@ resource "null_resource" "generate_efs_mount_script" {
 
 ################## Clean Up Existing Script ################## 
 resource "null_resource" "clean_up" {
+
   provisioner "local-exec" {
     when    = destroy
     command = "rm -rf efs_mount.sh"
