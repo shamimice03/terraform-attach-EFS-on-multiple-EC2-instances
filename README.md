@@ -18,6 +18,9 @@ Attach the AWS EFS filesystem to multiple AWS EC2 instances running on different
 
 7. Deploy two EC2 instances on different subnets created on different AZs. While providing the EC2 instances execute the custom script we created for mounting EFS using terraform remote-exec provisioners.
 
+### Test
+To test whether the EFS file system is mounted on or not. `SSH` into the instances and run `df -k` command to find out all the mounted file systems on your EC2 instances.
+
 <!-- ## Attach EFS volume to Multiple EC2 instances
 
 ```
