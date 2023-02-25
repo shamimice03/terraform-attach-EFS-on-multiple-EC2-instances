@@ -99,11 +99,27 @@ resource "aws_efs_file_system" "file_system_1" {
   }
 }
 
+################## Create EFS mount targets ################ 
 resource "aws_efs_mount_target" "mount_targets" {
   count           = 2
   file_system_id  = aws_efs_file_system.file_system_1.id
   subnet_id       = local.public_subnets[count.index]
   security_groups = [aws_security_group.efs_sg.id]
+}
+
+################## Generating Script for Mounting EFS ################## 
+resource "null_resource" "generate_efs_mount_script" {
+
+  provisioner "local-exec" {
+    command = templatefile("efs_mount.tpl", {
+      efs_mount_point = var.efs_mount_point
+      file_system_id  = local.file_system_id
+    })
+    interpreter = [
+      "bash",
+      "-c"
+    ]
+  }
 }
 
 ################## SSH key generation ################## 
@@ -160,21 +176,6 @@ resource "aws_instance" "public_hosts" {
   provisioner "remote-exec" {
     inline = [
       "bash efs_mount.sh",
-    ]
-  }
-}
-
-################## Generating Script for Mounting EFS ################## 
-resource "null_resource" "generate_efs_mount_script" {
-
-  provisioner "local-exec" {
-    command = templatefile("efs_mount.tpl", {
-      efs_mount_point = var.efs_mount_point
-      file_system_id  = local.file_system_id
-    })
-    interpreter = [
-      "bash",
-      "-c"
     ]
   }
 }
