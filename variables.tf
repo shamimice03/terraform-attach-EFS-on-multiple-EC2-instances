@@ -47,7 +47,7 @@ variable "efs_sg_ports" {
 }
 
 variable "efs_mount_point" {
-  description = "Define the ports and protocols for efs the security group"
+  description = "Determine the mount point"
   type        = string
   default     = "content/test/"
 }
