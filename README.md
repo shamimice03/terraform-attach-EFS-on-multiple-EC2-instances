@@ -22,6 +22,28 @@ Attach the AWS EFS filesystem to multiple AWS EC2 instances running on different
 ### Test
 To test whether the EFS file system is mounted on or not. `SSH` into the instances and run `df -k` command to find out all the mounted file systems on your EC2 instances.
 
+### Bash Script used to mount file system:
+```
+#! /bin/bash
+# Update the system packages
+sudo yum update -y
+
+# Create a directory for the content
+sudo mkdir -p content/test/
+
+# Install the Amazon EFS utilities
+sudo yum -y install amazon-efs-utils
+
+# Add an entry to /etc/fstab to mount the EFS file system
+sudo su -c  "echo 'fs-0c4c5164674de43ca:/ content/test/ efs _netdev,tls 0 0' >> /etc/fstab"
+
+# Mount the EFS file system
+sudo mount content/test/
+
+# Display the disk space usage
+df -k
+```
+
 <!-- ## Attach EFS volume to Multiple EC2 instances
 
 ```
