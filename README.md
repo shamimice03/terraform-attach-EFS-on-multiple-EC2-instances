@@ -1,4 +1,4 @@
-## Attach EFS to Multiple EC2 Instances using Terraform
+## Attach EFS to multiple EC2 instances using Terraform
 Attach the AWS EFS filesystem to multiple AWS EC2 instances running on different AZs. To automate the whole process from creating an EFS filesystem to attaching it to the EC2 instances, we will use Terraform.
 
 ![github.small](efs.png)
